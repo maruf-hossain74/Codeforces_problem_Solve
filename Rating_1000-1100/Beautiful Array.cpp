@@ -11,7 +11,6 @@ int power(int a, int b) {
 int t = 1;
 int32_t main() {
     ios::sync_with_stdio(0),cin.tie(0),cout.tie(0),cin>>t;
-    //cin >> t;
     while(t--) {
         int n, k, b, s; cin>> n>> k>> b>> s;
         int A[n];
