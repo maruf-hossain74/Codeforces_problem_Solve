@@ -10,4 +10,5 @@ int32_t main()
     else
         cout<<"NO\n";
 	return 0;
+
 }
