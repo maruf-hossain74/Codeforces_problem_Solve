@@ -7,7 +7,6 @@
 #include<iomanip>
 #include <queue>
 #include <climits>
-
 using namespace std;
 
 #define pi      3.1415926535897932384626433832795028841971693993751058
