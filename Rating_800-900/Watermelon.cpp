@@ -6,7 +6,7 @@ int32_t main()
 {
     int w;
     cin >> w;
-    if(w%2 == 0 && w >= 4)
+    if(w%2 == 0 && w >= 4)     
         cout<<"YES\n";
     else
         cout<<"NO\n";
