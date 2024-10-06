@@ -9,7 +9,6 @@ int32_t main()
         cout<<"YES\n";
     else
         cout<<"NO\n";
-
 	return 0;
 }
 
