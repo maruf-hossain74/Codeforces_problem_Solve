@@ -12,9 +12,6 @@ int main()
     for (int i = 0; i < n; i++)
     {
         int smallest = i;
-        // for (int i = 0; i < n; i++)
-        //     if(a[i] < a[smallest])
-        //         smallest = i;
         bool flag = true;
         for (int j = smallest+1; j <= smallest+y; j++)
         {
