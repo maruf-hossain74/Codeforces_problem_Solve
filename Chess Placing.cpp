@@ -12,7 +12,6 @@ $$$$$$$$$ SEASION: 2021-2022 $$$$$$$$$$$*/
 #include <queue>
 #include <climits>
 #include<stdio.h>
-
 using namespace std;
 
 #define pi      3.1415926535897932384626433832795028841971693993751058
