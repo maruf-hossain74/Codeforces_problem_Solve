@@ -1,6 +1,2 @@
 print("safety")
 
-
-
-
-
