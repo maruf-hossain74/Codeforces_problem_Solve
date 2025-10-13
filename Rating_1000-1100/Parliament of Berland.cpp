@@ -1,0 +1,16 @@
+#include<bits/stdc++.h>
+using namespace std;
+int main(){
+int i,n,p,a,b;
+cin>>n>>a>>b;
+p=n-1;
+if(n>a*b)cout<<-1;
+else 
+while(a--){
+for(i=0;i<b;i++)
+if((a+i)%2==0) cout<<n<<" ",n=max(0,n-2);
+else cout<<p<<" ",p=max(p-2,0);
+cout<<"\n";
+}
+}
+		 	 		 	 	 	  	 	  	   	  				
