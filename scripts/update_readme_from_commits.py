@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-Update README.md problem table by reading each file's latest git commit message
-and extracting contest + rating info from the commit subject.
-
-Example commit subject that will be parsed:
+Update README.md problem table by searching each file's git commit history
+for a commit subject like:
   contest: Educational Codeforces Round 162 (Rated for Div. 2)_1100_Rating
+
+Fallback for rating: use parent folder name if it starts with "Rating_".
+
+Writes between markers:
+<!--START_SECTION:problems-->
+<!--END_SECTION:problems-->
 """
 
 import subprocess
@@ -15,31 +19,30 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
-EXCLUDE_DIRS = {".github", "scripts"}
+EXCLUDE_DIRS = {".github", "scripts", ".git"}
 EXT_LANG = {
     ".cpp": "C++", ".cc":"C++", ".c":"C", ".py":"Python", ".java":"Java",
     ".js":"JavaScript", ".ts":"TypeScript", ".cs":"C#", ".go":"Go",
     ".rs":"Rust", ".kt":"Kotlin", ".php":"PHP", ".rb":"Ruby"
 }
 
-# Try to parse commit subjects like:
-# "contest: Educational Codeforces Round 162 (Rated for Div. 2)_1100_Rating"
-# This regex captures:
-#  - contest name in group 1
-#  - rating in group 2 (3 or 4 digits) if present
+# Pattern to parse commit subjects like:
+# contest: Codeforces Round 503 (by SIS, Div. 2)_1000_Rating
 COMMIT_PATTERN = re.compile(r'contest:\s*(.+?)_?(\d{3,4})?_?Rating', re.IGNORECASE)
+# fallback rating pattern in commit subject (e.g., "... 1100 Rating")
+RATING_IN_SUBJ = re.compile(r'(\d{3,4})\s*[_-]?\s*Rating', re.IGNORECASE)
+# folder pattern like Rating_1000-1100
+FOLDER_RATING = re.compile(r'Rating[_\- ]?(\d{3,4})(?:[_\- ]?-\s?(\d{3,4}))?', re.IGNORECASE)
 
 def run(cmd, cwd=ROOT):
     res = subprocess.run(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if res.returncode != 0:
         raise RuntimeError(f"Command {cmd!r} failed: {res.stderr.strip()}")
-    return res.stdout.strip()
+    return res.stdout
 
 def list_files():
-    # get all tracked files
     out = run(["git", "ls-files"])
     files = [Path(line) for line in out.splitlines() if line]
-    # filter out files in EXCLUDE_DIRS and README itself
     filtered = []
     for p in files:
         if any(part in EXCLUDE_DIRS for part in p.parts):
@@ -51,30 +54,47 @@ def list_files():
         filtered.append(p)
     return filtered
 
-def last_commit_subject_for(path: Path):
-    # git log -1 --pretty=format:%s -- path
+def commit_subjects_for(path: Path):
+    # returns list of commit subjects (newest -> oldest) for the file, following renames
     try:
-        subj = run(["git", "log", "-1", "--pretty=format:%s", "--", str(path)])
-        return subj
+        out = run(["git", "log", "--follow", "--pretty=format:%s", "--", str(path)])
+        lines = [l for l in out.splitlines() if l.strip()]
+        return lines
     except RuntimeError:
-        return ""
+        return []
 
-def parse_commit_subject(subj: str):
-    if not subj:
-        return None, None
-    m = COMMIT_PATTERN.search(subj)
-    if m:
-        contest = m.group(1).strip()
-        rating = m.group(2) if m.group(2) else ""
-        return contest, rating
-    # fallback: try to find a 3-4 digit rating anywhere
-    m2 = re.search(r'(\d{3,4})\s*[_-]?\s*Rating', subj, re.IGNORECASE)
-    if m2:
-        return "", m2.group(1)
+def parse_subjects_for_metadata(subjects):
+    # subjects: list of commit subjects newest->oldest
+    for s in subjects:
+        m = COMMIT_PATTERN.search(s)
+        if m:
+            contest = m.group(1).strip()
+            rating = m.group(2) if m.group(2) else ""
+            return contest, rating
+        # fallback rating
+        m2 = RATING_IN_SUBJ.search(s)
+        if m2:
+            return "", m2.group(1)
     return None, None
 
+def rating_from_parent_folder(path: Path):
+    # try to read rating info from parent folder name
+    parent = path.parent.name
+    m = FOLDER_RATING.search(parent)
+    if m:
+        if m.group(2):
+            return f"{m.group(1)}-{m.group(2)}"
+        return m.group(1)
+    # try grandparent (in case nested)
+    gp = path.parents[1].name if len(path.parents) > 1 else ""
+    m2 = FOLDER_RATING.search(gp)
+    if m2:
+        if m2.group(2):
+            return f"{m2.group(1)}-{m2.group(2)}"
+        return m2.group(1)
+    return ""
+
 def build_table(rows):
-    # rows: list of dicts {file, name, lang, contest, rating}
     if not rows:
         return "_No solution files found._"
     header = "| # | File | Language | Contest | Rating |\n|---:|---|---|---|---|\n"
@@ -114,14 +134,23 @@ def main():
     print(f"Found {len(files)} solution files (scanning git history)...")
     rows = []
     for p in files:
-        subj = last_commit_subject_for(p)
-        contest, rating = parse_commit_subject(subj)
-        # If parse returned (None, None) -> no meaningful data
-        # If it returned ("", rating) -> contest not found but rating found
+        try:
+            subs = commit_subjects_for(p)
+        except Exception as e:
+            print(f"Warning: git log failed for {p}: {e}")
+            subs = []
+        contest, rating = parse_subjects_for_metadata(subs)
         if contest is None and rating is None:
-            # keep them empty so user can see which files lack proper commit or pattern
+            # nothing found in history; fallback to folder
             contest = ""
-            rating = ""
+            rating = rating_from_parent_folder(p) or ""
+        # another fallback: if rating still empty, try searching subjects for any 3-4 digit number
+        if not rating and subs:
+            for s in subs:
+                m = re.search(r'(\d{3,4})', s)
+                if m:
+                    rating = m.group(1)
+                    break
         lang = EXT_LANG.get(p.suffix.lower(), p.suffix.lower().lstrip("."))
         rows.append({"file": p, "name": p.name, "lang": lang, "contest": contest, "rating": rating})
     table_md = build_table(rows)
