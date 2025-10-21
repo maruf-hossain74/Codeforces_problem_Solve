@@ -1,19 +1,14 @@
-name: Update README
+name: Update README from commits
 
 on:
   push:
     paths:
-      - '**.py'
-      - '**.cpp'
-      - '**.cc'
-      - '**.c'
-      - '**.java'
-      - '**.js'
-      - '**.ts'
-      - '**.py'
-      - '.github/workflows/**'
-      - 'README.md'
       - 'scripts/**'
+      - '.github/workflows/**'
+      - '**/*.cpp'
+      - '**/*.py'
+      - '**/*.java'
+      - 'README.md'
 
 jobs:
   update-readme:
@@ -22,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: true  # so the action can push
+          persist-credentials: true
           fetch-depth: 0
 
       - name: Set up Python
@@ -30,21 +25,17 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install requirements (none)
-        run: echo "No pip packages required"
-
-      - name: Run update script
-        run: |
-          python3 scripts/update_readme.py
+      - name: Run README updater
+        run: python3 scripts/update_readme_from_commits.py
 
       - name: Commit README if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if ! git diff --exit-code; then
+          if ! git diff --quiet; then
             git add README.md
-            git commit -m "chore: auto-update README with solved problems [ci skip]"
+            git commit -m "chore: auto-update README table from commit messages [ci skip]"
             git push
           else
-            echo "No changes to commit"
+            echo "No README changes"
           fi
