@@ -1,45 +1,45 @@
-name: Update README (create PR)
+# name: Update README (create PR)
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
-on:
-  push:
-    paths:
-      - 'scripts/**'
-      - '.github/workflows/**'
-      - '**/*.cpp'
-      - '**/*.py'
-      - '**/*.java'
-      - 'README.md'
+# on:
+#   push:
+#     paths:
+#       - 'scripts/**'
+#       - '.github/workflows/**'
+#       - '**/*.cpp'
+#       - '**/*.py'
+#       - '**/*.java'
+#       - 'README.md'
 
-jobs:
-  update-readme:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+# jobs:
+#   update-readme:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: "3.x"
 
-      - name: Run README updater
-        run: python3 scripts/update_readme_from_commits.py
+#       - name: Run README updater
+#         run: python3 scripts/update_readme_from_commits.py
 
-      - name: Show diff
-        run: git --no-pager diff --name-only || true
+#       - name: Show diff
+#         run: git --no-pager diff --name-only || true
 
-      - name: Create Pull Request if README changed
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: chore: auto-update README table from commit messages [ci skip]
-          title: chore: auto-update README
-          body: Auto-generated README update
-          branch: update/readme-automatic
-          labels: automated
-          base: main
+#       - name: Create Pull Request if README changed
+#         uses: peter-evans/create-pull-request@v5
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
+#           commit-message: chore: auto-update README table from commit messages [ci skip]
+#           title: chore: auto-update README
+#           body: Auto-generated README update
+#           branch: update/readme-automatic
+#           labels: automated
+#           base: main
