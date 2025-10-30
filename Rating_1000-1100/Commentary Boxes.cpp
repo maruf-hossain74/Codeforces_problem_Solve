@@ -1,0 +1,10 @@
+#include<iostream>
+using namespace std;
+main()
+{
+	long long n,m;
+	int a,b;
+	cin>>n>>m>>a>>b;
+	
+	cout<<min((n%m)*b,(m-n%m)*a);
+}
