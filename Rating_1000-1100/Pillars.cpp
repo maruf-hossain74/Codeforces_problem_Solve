@@ -1,0 +1,36 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+#include<string.h>
+int main()
+{
+    long long int n,m,i,j,k,a[200009],q=0;
+    scanf("%lld",&n);
+    for(i=0;i<n;i++)
+        scanf("%lld",&a[i]);
+        m=0;
+        j=0;
+        for(i=0;i<n;i++)
+        {
+            if(a[i]>m){
+                m=a[i];
+                j=i;
+            }
+        }
+            for(i=j-1;i>=0;i--){
+                if(a[i]>a[i+1]){
+                    q=1;
+                    break;
+                }
+            }
+             for(i=j+1;i<n;i++){
+                if(a[i]>a[i-1]){
+                    q=1;
+                    break;
+                }
+            }
+        if(q==1)
+            printf("NO\n");
+    else
+        printf("YES\n");
+}
